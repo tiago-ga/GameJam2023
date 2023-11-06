@@ -4,64 +4,91 @@ using UnityEngine;
 
 public class RunningMovement : MonoBehaviour
 {
-    private float horizontal;
-    private float speed=8f;
-    private float jumpingPower = 16f;
-    private bool isFacingRight = true;
+    private Rigidbody2D rb;
+    [SerializeField] private float moveSpeed = 10;
+    private float xAxis;
+    Animator anim;
+    
 
-
-    Animator animator;
-
-    [SerializeField] private Rigidbody2D rb;
+    [Header("Ground Check Settings")]
+    [SerializeField] private float jumpForce = 45;
     [SerializeField] private Transform groundCheck;
-    [SerializeField] private LayerMask groundLayer;
+    [SerializeField] private float groundCheckY = 0.2f;
+    [SerializeField] private float groundCheckX = 0.5f;
+    [SerializeField] private LayerMask whatIsGround;
 
+
+
+    private void Start()
+    {
+        rb = GetComponent<Rigidbody2D>();
+        anim = GetComponent<Animator>();
+    }
 
     // Update is called once per frame
     void Update()
     {
-        horizontal = Input.GetAxisRaw("Horizontal");
-        animator = this.GetComponent<Animator>();
-        if (Input.GetButton("Jump") && isGrounded())
-        {
-            rb.velocity = new Vector2(rb.velocity.x, jumpingPower);
-            animator.SetTrigger("Jump");
-        }
-        if (Input.GetButton("Jump") && rb.velocity.y>0f)
-        {
-            rb.velocity = new Vector2(rb.velocity.x, rb.velocity.y*0.5f);
-            animator.SetTrigger("Jump");
-        }
 
-        Flip();
+        getInputs();
+        move();
+        jump();
+        flip();
     }
+
     private void FixedUpdate()
     {
-        rb.velocity = new Vector2(horizontal*speed, rb.velocity.y);
-        if (horizontal*speed==0)
+
+
+    }
+    void getInputs()
+    {
+        xAxis = Input.GetAxisRaw("Horizontal");
+    }
+
+    void move()
+    {
+        rb.velocity = new Vector2(moveSpeed * xAxis, rb.velocity.y);
+        anim.SetBool("Walking", rb.velocity.x != 0 && grounded());
+    }
+
+    public bool grounded()
+    {
+        if (Physics2D.Raycast(groundCheck.position, Vector2.down, groundCheckY, whatIsGround) 
+            || Physics2D.Raycast(groundCheck.position+new Vector3(groundCheckX,0,0), Vector2.down, groundCheckY, whatIsGround)
+            || Physics2D.Raycast(groundCheck.position + new Vector3(-groundCheckX, 0, 0), Vector2.down, groundCheckY, whatIsGround))
         {
-            animator.SetTrigger("Stop");
+            return true;
         }
         else
         {
-            animator.SetTrigger("Run");
+            return false;
         }
         
-
     }
 
-    private bool isGrounded()
+    void jump()
     {
-        return Physics2D.OverlapCircle(groundCheck.position, 0.2f, groundLayer);
+        if (Input.GetButtonUp("Jump") && rb.velocity.y > 0)
+        {
+            rb.velocity = new Vector2(rb.velocity.x,0);
+        }
+        if (Input.GetButtonDown("Jump") && grounded())
+        {
+            rb.velocity = new Vector3(rb.velocity.x, jumpForce);
+        }
+
+
+        anim.SetBool("Jumping", !grounded());
     }
 
-    private void Flip()
+    void flip()
     {
-        if (isFacingRight && horizontal <0f || isFacingRight && horizontal > 0f) { 
-            isFacingRight = !isFacingRight;
-            Vector3 localSacle = transform.localScale;
-            localSacle.x *= -1f;
-            transform.localScale = localSacle;
+        if (xAxis<0)
+        {
+            transform.localScale = new Vector2(-1, transform.localScale.y);
+        }else if (xAxis>0)
+        {
+            transform.localScale = new Vector2(1, transform.localScale.y);
         }
     }
 }
