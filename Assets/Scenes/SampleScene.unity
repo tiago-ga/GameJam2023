@@ -299,7 +299,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   followSpeed: 0.1
   offset: {x: 0, y: 4, z: -2}
-  cam: {fileID: 519420031}
+  char_cam: {fileID: 519420031}
 --- !u!1001 &685281099
 PrefabInstance:
   m_ObjectHideFlags: 0
